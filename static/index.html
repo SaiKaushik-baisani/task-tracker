@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Tracker</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #eef1f4;
+      --surface: #ffffff;
+      --ink: #17202b;
+      --muted: #5e6b7a;
+      --line: #dce2e8;
+      --hover: #f5f7f9;
+      --accent: #0e6b5c;
+      --accent-ink: #ffffff;
+      --danger: #b42318;
+      --danger-bg: #fdecea;
+      --radius: 0.75rem;
+      --font: "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f151b;
+        --surface: #172029;
+        --ink: #e6ebf0;
+        --muted: #93a1b0;
+        --line: #27333f;
+        --hover: #1c2732;
+        --accent: #3fbf9f;
+        --accent-ink: #0b1511;
+        --danger: #f97066;
+        --danger-bg: #2d1917;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      line-height: 1.5;
+      margin: 0;
+      padding: 3rem 1rem 4rem;
+    }
+
+    main {
+      margin: 0 auto;
+      max-width: 40rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+    }
+
+    /* Add form: one field, button attached */
+    form {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.4rem;
+    }
+
+    form:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    label {
+      border: 0;
+      clip: rect(0 0 0 0);
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      padding: 0;
+      position: absolute;
+      white-space: nowrap;
+      width: 1px;
+    }
+
+    input[type="text"] {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      flex: 1;
+      font: inherit;
+      min-width: 0;
+      outline: none;
+      padding: 0.5rem 0.6rem;
+    }
+
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    button {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 0.35rem 0.7rem;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    button:hover {
+      background: var(--hover);
+      color: var(--ink);
+    }
+
+    button:focus-visible,
+    input[type="checkbox"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    form button[type="submit"] {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.5rem 1.1rem;
+    }
+
+    form button[type="submit"]:hover {
+      background: var(--accent);
+      color: var(--accent-ink);
+      filter: brightness(1.08);
+    }
+
+    /* Status / error line */
+    #message:empty { display: none; }
+
+    #message {
+      background: var(--danger-bg);
+      border-radius: 0.5rem;
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin: 0 0 1rem;
+      padding: 0.6rem 0.8rem;
+    }
+
+    #empty-state {
+      color: var(--muted);
+      padding: 2rem 0;
+      text-align: center;
+    }
+
+    /* Task list: one surface, hairline dividers */
+    ul {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      list-style: none;
+      margin: 0;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    ul:empty { display: none; }
+
+    .task {
+      align-items: center;
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 0.9rem;
+    }
+
+    .task + .task { border-top: 1px solid var(--line); }
+
+    .task-title {
+      overflow-wrap: anywhere;
+      transition: color 0.2s;
+    }
+
+    .task-title.done {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+    }
+
+    .edit-title {
+      background: var(--bg);
+      border: 1px solid var(--accent) !important;
+      border-radius: 0.4rem;
+      flex: 1;
+      padding: 0.3rem 0.5rem !important;
+    }
+
+    /* Round checkbox with drawn tick */
+    input[type="checkbox"] {
+      appearance: none;
+      background: transparent;
+      border: 2px solid var(--muted);
+      border-radius: 50%;
+      cursor: pointer;
+      flex: none;
+      height: 1.3rem;
+      margin: 0;
+      position: relative;
+      transition: background-color 0.15s, border-color 0.15s;
+      width: 1.3rem;
+    }
+
+    input[type="checkbox"]:hover { border-color: var(--accent); }
+
+    input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    input[type="checkbox"]:checked::after {
+      border: solid var(--accent-ink);
+      border-width: 0 2px 2px 0;
+      content: "";
+      height: 0.6rem;
+      left: 0.37rem;
+      position: absolute;
+      top: 0.12rem;
+      transform: rotate(45deg);
+      width: 0.3rem;
+    }
+
+    /* Row actions */
+    .task button { flex: none; }
+
+    .task button:last-child:hover {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    @media (max-width: 30rem) {
+      body { padding-top: 1.5rem; }
+      .task { flex-wrap: wrap; }
+      .task-title, .edit-title { flex-basis: calc(100% - 2.5rem); }
+      .task button:nth-of-type(1) { margin-left: 2.05rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Task Tracker</h1>
+    <form id="add-form">
+      <label for="new-title">Task title</label>
+      <input id="new-title" name="title" type="text" maxlength="100" placeholder="What needs doing?" required>
+      <button type="submit">Add task</button>
+    </form>
+    <p id="message" role="status" aria-live="polite"></p>
+    <p id="empty-state">No tasks yet. Add one above to get started.</p>
+    <ul id="task-list"></ul>
+  </main>
+
+  <script>
+    const taskList = document.querySelector("#task-list");
+    const message = document.querySelector("#message");
+    const emptyState = document.querySelector("#empty-state");
+    const addForm = document.querySelector("#add-form");
+
+    async function request(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Request failed (${response.status}).`;
+        if (response.headers.get("content-type")?.includes("application/json")) {
+          const error = await response.json();
+          if (typeof error.detail === "string") {
+            errorMessage = error.detail;
+          } else if (Array.isArray(error.detail)) {
+            errorMessage = error.detail
+              .map((issue) => issue.msg)
+              .filter(Boolean)
+              .join(" ") || errorMessage;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      if (response.status === 204) {
+        return null;
+      }
+      return response.json();
+    }
+
+    async function refreshTasks() {
+      const tasks = await request("/tasks");
+      taskList.replaceChildren();
+      emptyState.hidden = tasks.length > 0;
+
+      for (const task of tasks) {
+        const item = document.createElement("li");
+        item.className = "task";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.setAttribute(
+          "aria-label",
+          `Mark ${task.title} as ${task.done ? "incomplete" : "complete"}`,
+        );
+        checkbox.addEventListener("change", async () => {
+          const succeeded = await performAction(() => request(`/tasks/${task.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ title: task.title, done: checkbox.checked }),
+          }));
+          if (!succeeded) {
+            checkbox.checked = task.done;
+          }
+        });
+
+        const title = document.createElement("span");
+        title.className = task.done ? "task-title done" : "task-title";
+        title.textContent = task.title;
+
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.textContent = "Edit";
+        editButton.addEventListener("click", async () => {
+          const input = item.querySelector(".edit-title");
+          if (!input) {
+            const editor = document.createElement("input");
+            editor.className = "edit-title";
+            editor.type = "text";
+            editor.maxLength = 100;
+            editor.value = task.title;
+            editor.setAttribute("aria-label", "Edit task title");
+            title.replaceWith(editor);
+            editButton.textContent = "Save";
+            editor.focus();
+            return;
+          }
+
+          const newTitle = input.value.trim();
+          if (!newTitle) {
+            message.textContent = "Title must not be blank.";
+            return;
+          }
+          await performAction(() => request(`/tasks/${task.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ title: newTitle, done: task.done }),
+          }));
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", async () => {
+          await performAction(() => request(`/tasks/${task.id}`, { method: "DELETE" }));
+        });
+
+        item.append(checkbox, title, editButton, deleteButton);
+        taskList.append(item);
+      }
+    }
+
+    async function performAction(action) {
+      message.textContent = "";
+      try {
+        await action();
+        await refreshTasks();
+        return true;
+      } catch (error) {
+        message.textContent = error instanceof Error ? error.message : "The request failed.";
+        return false;
+      }
+    }
+
+    addForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = addForm.elements.title;
+      await performAction(() => request("/tasks", {
+        method: "POST",
+        body: JSON.stringify({ title: input.value }),
+      }));
+      if (!message.textContent) {
+        addForm.reset();
+        input.focus();
+      }
+    });
+
+    refreshTasks().catch((error) => {
+      message.textContent = error.message;
+    });
+  </script>
+</body>
+</html>

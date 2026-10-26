@@ -1,0 +1,19 @@
+services:
+
+  task-tracker:
+    build: .
+    container_name: task-tracker
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - task_data:/app/data
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  task_data:
